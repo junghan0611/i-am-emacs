@@ -89,9 +89,62 @@ Build environment: **NixOS flake.nix + build.zig**
 2. Check open issues: `br ready`
 3. Review current epic status
 
+## Research Notes (2026-02-09)
+
+This section records findings from analyzing the emacs-30.2 codebase
+and studying upstream discussions. It serves as context for
+architectural decisions.
+
+### feature/igc changes our GC strategy
+
+GNU Emacs has an official incremental GC on `feature/igc` (since
+2024-02, merge started 2026-01). It uses MPS with SIGSEGV-based page
+protection as a write barrier. If it merges, our Epic 2 (Incremental
+GC) becomes redundant. **Current status: Epic 2 is blocked pending
+IGC merge decision.**
+
+### I/O thread separation is the unique gap
+
+After reviewing emacs-devel archives:
+- GC → `feature/igc` is handling this upstream
+- Threading/GIL → 10 years of discussion, no solution
+- I/O thread → **nobody is working on this**
+
+`wait_reading_process_output()` (process.c:5276-8062) calls
+`thread_select(pselect, ...)` which already releases `global_lock`
+during the blocking call. The pattern exists — it needs to be
+extended into a permanent I/O thread with event queue dispatch.
+
+This is where the project can contribute something new.
+
+### org-agenda bottleneck is not in process.c
+
+File I/O goes through `fileio.c` → `emacs_read()`, not through
+`pselect()`. The org-agenda freeze is caused by Elisp computation
+(eval.c) and GC pauses (alloc.c), not by I/O blocking. The I/O
+thread helps different scenarios: compile, LSP, TRAMP, shell.
+
+### maybe_quit() has 111 call sites but structural gaps
+
+`maybe_quit()` exists in 40 C files (111 sites). Bytecode checks
+quit every 255th backward branch via `quitcounter`. But it cannot
+fire during system calls, GC (`block_input` scope), or C-internal
+loops. This is why C-g feels unresponsive on GUI frames.
+
+### Key upstream references
+
+- Troy Hinckley's Rune: CSP channels + per-thread GC + OS threads
+  (closest to our event-driven architecture)
+- Chris Wellons on Emacs 26 threads: "many data races, completely
+  untrustworthy" — the GIL is load-bearing
+- Philipp Stephani (2016): Go-style CSP without OS threads worked
+  but was not merged
+
 ## References
 
 - Ghostty (Zig + libxev + flake.nix): `~/repos/3rd/ghostty/`
 - Event pattern reference: `~/repos/work/sks-hub-zig/`
+- Rune (Rust Emacs, CSP architecture): https://github.com/CeleritasCelery/rune
+- feature/igc (official incremental GC): `feature/igc` branch on Savannah
 - Neomacs (GPU approach, reference only): https://github.com/eval-exec/neomacs
-- Emacs-ng (TypeScript, Threading, Async I/O, and WebRender): https://github.com/emacs-ng/emacs-ng
+- Emacs-ng (stalled, lessons learned): https://github.com/emacs-ng/emacs-ng
