@@ -33,28 +33,28 @@
 
 ### Tier 1 — Core Bottlenecks
 
-| File       | Lines  | Role                                |
-|------------|--------|-------------------------------------|
-| process.c  | 9,090  | I/O event loop, pselect() blocking  |
-| alloc.c    | 7,604  | GC (stop-the-world mark-sweep)      |
-| keyboard.c | 14,612 | command_loop, input/timer/redisplay |
-| eval.c     | 4,647  | Elisp evaluator (Feval, Ffuncall)   |
+| File       | Lines  | Role                                | Tests (cases) |
+|------------|--------|-------------------------------------|---------------|
+| process.c  | 9,038  | I/O event loop, pselect() blocking  | 1,023 (37)    |
+| alloc.c    | 8,358  | GC (stop-the-world mark-sweep)      | 62 (5)        |
+| keyboard.c | 14,071 | command_loop, input/timer/redisplay | 79 (2)        |
+| eval.c     | 4,553  | Elisp evaluator (Feval, Ffuncall)   | 374 (20)      |
 
 ### Tier 2 — Threading Infrastructure
 
-| File        | Lines | Role                                 |
-|-------------|-------|--------------------------------------|
-| thread.c    | 1,314 | Existing thread support (incomplete) |
-| systhread.c | 553   | System thread primitives             |
-| systhread.h | 160   | Thread interface                     |
+| File        | Lines | Role                                 | Tests (cases) |
+|-------------|-------|--------------------------------------|---------------|
+| thread.c    | 1,221 | Existing thread support (cooperative + global lock) | 421 (33) |
+| systhread.c | 544   | System thread primitives (pthread/win32/stub) | — |
+| systhread.h | 113   | Thread interface (11 functions)      | —             |
 
 ### Tier 3 — Supporting Files
 
 | File     | Lines | Role                                            |
 |----------|-------|-------------------------------------------------|
-| sysdep.c | 4,717 | System-dependent code                           |
-| emacs.c  | 3,645 | Main entry point                                |
-| lisp.h   | 5,914 | Core data structures (read-only, do not modify) |
+| sysdep.c | 4,763 | System-dependent code                           |
+| emacs.c  | 3,759 | Main entry point                                |
+| lisp.h   | 5,939 | Core data structures (read-only, do not modify) |
 
 ### Explicitly Excluded
 
