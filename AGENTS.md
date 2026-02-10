@@ -140,6 +140,14 @@ loops. This is why C-g feels unresponsive on GUI frames.
 - Philipp Stephani (2016): Go-style CSP without OS threads worked
   but was not merged
 
+### Multi-daemon as process-level concurrency (2026-02-10)
+
+Multiple Emacs daemons sharing the same dotfiles can bypass GC/GIL/IO
+problems at OS process boundaries. Proven in denote-export (4 daemons,
+18x speedup, 2000 files). Prior art: emacs-mp, lsp-bridge/EAF
+coordinator pattern. Complementary to C-level fixes, not competing.
+Full analysis in garden note `20260209T123532`.
+
 ## References
 
 - Ghostty (Zig + libxev + flake.nix): `~/repos/3rd/ghostty/`
